@@ -1,0 +1,193 @@
+# =============================================================================
+# SmartHome Bridge — Example Configuration
+# =============================================================================
+# Copy this file to config.yaml and adjust values to match your environment.
+
+# --- MQTT Broker Connection ---
+mqtt:
+  broker: "tcp://localhost:1883"          # MQTT broker address
+                                          # Supported schemes: tcp://, ssl://, ws://, wss://
+  client_id: ""                           # Client ID (auto-generated from hostname+PID if empty)
+  username: ""                            # MQTT username (optional)
+  password: ""                            # MQTT password (optional)
+  keep_alive_sec: 60                      # Keepalive interval in seconds
+  connect_timeout_sec: 30                 # Initial connection timeout
+  ping_timeout_sec: 10                    # Per-ping timeout
+
+  subscriptions:
+    - topic: "zigbee2mqtt/#"              # Subscribe to all Zigbee2MQTT topics
+      qos: 1
+    - topic: "tasmota/+/tele/SENSOR"      # Tasmota sensor topics
+      qos: 1
+
+# --- Telegram Bot ---
+telegram:
+  bot_token: "YOUR_BOT_TOKEN_HERE"        # Get from @BotFather on Telegram
+  api_base_url: ""                        # Default: https://api.telegram.org
+  retry_max: 3                            # Max retry attempts on failure
+  retry_backoff_ms: [200, 600, 1800]      # Delay before each retry (ms)
+
+# --- Engine Tuning ---
+engine:
+  worker_count: 4                         # Number of goroutines processing messages
+  inbound_queue_size: 256                 # Buffer size for incoming MQTT messages
+  notify_queue_size: 64                   # Buffer size for outgoing notifications
+
+# --- Notification Rules ---
+rules:
+  # --------------------------------------------------------------------------
+  # Example 1: Alert when battery level drops below 20%
+  # --------------------------------------------------------------------------
+  - name: "low_battery"
+    description: "Battery level below 20%"
+    enabled: true
+    topic_filter: "^zigbee2mqtt/.+"       # Only evaluate Zigbee2MQTT topics (regex)
+    device_key_source: "topic"            # Use MQTT topic last segment as device identifier
+    device_key_path: ""                   # Not used when source is "topic"
+    conditions:
+      - field_path: "battery"             # JSON path to the field (gjson dot-notation)
+        operator: "lt"                    # lt = less than
+        value: 20
+        value_type: "number"
+    condition_logic: "and"                # Combine conditions with AND (or "or")
+    time_window:                          # Optional: only notify during these hours
+      start: "07:00"
+      end: "23:00"
+      timezone: "Europe/Moscow"
+    cooldown_minutes: 60                  # Don't re-notify for the same device within 60 min
+    chat_ids:
+      - 123456789                         # Your Telegram chat ID
+    message_template: |
+      ⚠️ <b>Low Battery Alert</b>
+
+      Device: <code>{{ .Device }}</code>
+      Battery: <b>{{ .Fields.battery }}%</b>
+      Topic: <code>{{ .Topic }}</code>
+      Time: {{ formatTime .Time "15:04:05 02.01.2006" }}
+
+  # --------------------------------------------------------------------------
+  # Example 2: Alert when temperature exceeds threshold
+  # --------------------------------------------------------------------------
+  - name: "high_temperature"
+    description: "Temperature above 30°C"
+    enabled: true
+    topic_filter: "^zigbee2mqtt/.+"
+    conditions:
+      - field_path: "temperature"
+        operator: "gt"                    # gt = greater than
+        value: 30
+        value_type: "number"
+    condition_logic: "and"
+    cooldown_minutes: 30
+    chat_ids:
+      - 123456789
+    message_template: |
+      🌡️ <b>High Temperature Alert</b>
+
+      Device: <code>{{ .Device }}</code>
+      Temperature: <b>{{ .Fields.temperature }}°C</b>
+      Time: {{ formatTime .Time "15:04:05" }}
+
+  # --------------------------------------------------------------------------
+  # Example 3: Alert when door/window is opened (boolean sensor)
+  # --------------------------------------------------------------------------
+  - name: "door_open"
+    description: "Door or window sensor reports open"
+    enabled: true
+    topic_filter: "^zigbee2mqtt/.+"
+    conditions:
+      - field_path: "contact"
+        operator: "eq"
+        value: false                     # false = open (Zigbee convention)
+        value_type: "boolean"
+    condition_logic: "and"
+    cooldown_minutes: 5
+    chat_ids:
+      - 123456789
+    message_template: |
+      🚪 <b>Door/Window Opened</b>
+
+      Device: <code>{{ .Device }}</code>
+      State: <b>OPEN</b>
+      Time: {{ formatTime .Time "15:04:05" }}
+
+  # --------------------------------------------------------------------------
+  # Example 4: Combined conditions with OR logic — alert on any issue
+  # --------------------------------------------------------------------------
+  - name: "sensor_issue"
+    description: "Any sensor reports a problem"
+    enabled: false                       # Disabled by default, enable if needed
+    topic_filter: "^zigbee2mqtt/.+"
+    conditions:
+      - field_path: "battery"
+        operator: "lt"
+        value: 10
+        value_type: "number"
+      - field_path: "linkquality"
+        operator: "lt"
+        value: 20
+        value_type: "number"
+      - field_path: "temperature"
+        operator: "gt"
+        value: 50
+        value_type: "number"
+    condition_logic: "or"                # Trigger if ANY condition matches
+    cooldown_minutes: 15
+    chat_ids:
+      - 123456789
+    message_template: |
+      🔔 <b>Sensor Issue Detected</b>
+
+      Device: <code>{{ .Device }}</code>
+      Topic: <code>{{ .Topic }}</code>
+      Fields: <code>{{ .Payload }}</code>
+      Time: {{ formatTime .Time "15:04:05" }}
+
+  # --------------------------------------------------------------------------
+  # Example 5: String matching — check device state
+  # --------------------------------------------------------------------------
+  - name: "water_leak"
+    description: "Water leak sensor triggered"
+    enabled: true
+    topic_filter: "^zigbee2mqtt/.+"
+    conditions:
+      - field_path: "water_leak"
+        operator: "eq"
+        value: "true"                    # String comparison
+        value_type: "string"
+    condition_logic: "and"
+    cooldown_minutes: 10
+    chat_ids:
+      - 123456789
+    message_template: |
+      💧 <b>Water Leak Detected!</b>
+
+      Device: <code>{{ .Device }}</code>
+      Topic: <code>{{ .Topic }}</code>
+      Time: {{ formatTime .Time "15:04:05 02.01.2006" }}
+
+  # --------------------------------------------------------------------------
+  # Example 6: Overnight window — notify only during night hours (22:00–06:00)
+  # --------------------------------------------------------------------------
+  - name: "motion_night"
+    description: "Motion detected during night hours"
+    enabled: false
+    topic_filter: "^zigbee2mqtt/.+"
+    conditions:
+      - field_path: "occupancy"
+        operator: "eq"
+        value: true
+        value_type: "boolean"
+    condition_logic: "and"
+    time_window:
+      start: "22:00"
+      end: "06:00"                       # End < start = overnight window
+      timezone: "Europe/Moscow"
+    cooldown_minutes: 5
+    chat_ids:
+      - 123456789
+    message_template: |
+      🏃 <b>Night Motion Detected</b>
+
+      Device: <code>{{ .Device }}</code>
+      Time: {{ formatTime .Time "15:04:05" }}
