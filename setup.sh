@@ -3,9 +3,9 @@
 # setup.sh — разворачивает smarthome-bridge в родительский каталог
 # ---------------------------------------------------------------------------
 # Использование:
-#   cd ./<your_smarthome-bridge_dir>
-#   git clone <repo-url>  <src>   # имя каталога любое
-#   cd <src> && bash setup.sh
+#   cd /opt/smarthome-bridge
+#   git clone <repo-url>
+#   cd smarthome-bridge && bash setup.sh
 #
 # Или указать другой каталог:
 #   TARGET=/srv/bridge bash setup.sh
@@ -22,43 +22,30 @@ echo "Repo name : $REPO_NAME"
 echo "Target    : $TARGET"
 echo ""
 
-# --- Шаг 1: Разместить исходники ---
-echo "[1/3] Placing repository at $TARGET/$REPO_NAME..."
-mkdir -p "$TARGET"
+# --- Шаг 1: Настроить git ---
+echo "[1/3] Configuring git..."
 
-if [ "$(realpath "$REPO_ROOT")" != "$(realpath "$TARGET/$REPO_NAME")" ]; then
-    if [ -d "$TARGET/$REPO_NAME" ]; then
-        echo "  -> $REPO_NAME/ already exists, skipping copy"
-    else
-        cp -r "$REPO_ROOT" "$TARGET/$REPO_NAME"
-        echo "  -> copied to $REPO_NAME/"
-    fi
-else
-    echo "  -> repo already in place, skipping copy"
-fi
+git config --global --add safe.directory "$REPO_ROOT" 2>/dev/null || true
+echo "  -> safe.directory added"
 
-# Разрешить git pull независимо от владельца файлов
-git config --global --add safe.directory "$TARGET/$REPO_NAME" 2>/dev/null || true
-echo "  -> git safe.directory added"
-
-# Заблокировать push с сервера
-git -C "$TARGET/$REPO_NAME" config remote.origin.pushurl "PUSH_BLOCKED__use_your_local_machine"
+git -C "$REPO_ROOT" config remote.origin.pushurl "PUSH_BLOCKED__use_your_local_machine"
 echo "  -> push blocked on server"
+
+# --- Шаг 2: Создать симлинки и развернуть рабочие файлы ---
+echo "[2/3] Deploying runtime files..."
+
 ln -sfn "$REPO_NAME" "$TARGET/src"
 echo "  -> symlink src/ -> $REPO_NAME/"
 
-# --- Шаг 2: Развернуть рабочие файлы ---
-echo "[2/3] Deploying runtime files..."
-
 if [ ! -f "$TARGET/compose.yml" ]; then
-    cp "$TARGET/src/docker-compose.prod.yml" "$TARGET/compose.yml"
+    cp "$REPO_ROOT/docker-compose.prod.yml" "$TARGET/compose.yml"
     echo "  -> compose.yml created"
 else
     echo "  -> compose.yml already exists, skipping"
 fi
 
 if [ ! -f "$TARGET/config.yaml" ]; then
-    cp "$TARGET/src/config.example.yaml" "$TARGET/config.yaml"
+    cp "$REPO_ROOT/config.example.yaml" "$TARGET/config.yaml"
     echo "  -> config.yaml created (from example)"
     echo "  ==> EDIT $TARGET/config.yaml BEFORE STARTING <=="
 else
