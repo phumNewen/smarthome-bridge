@@ -160,18 +160,18 @@ MQTT_BROKER=tcp://192.168.1.10:1883
 MQTT_USERNAME=homebridge
 ```
 
-### 4. Создать секреты
+### 4. Заполнить секреты
+
+`setup.sh` уже создал шаблонные файлы в `/opt/data/docker-secrets/`. Осталось заменить `REPLACE_ME` на реальные значения:
 
 ```bash
 SECRETS=/opt/data/docker-secrets
 
 # MQTT пароль
-echo "ваш_пароль_mqtt" > $SECRETS/mqtt_password.txt
-chmod 600 $SECRETS/mqtt_password.txt
+nano $SECRETS/mqtt_password.txt
 
 # Telegram bot token
-echo "12345:ABC-DEF..." > $SECRETS/telegram_bot_token.txt
-chmod 600 $SECRETS/telegram_bot_token.txt
+nano $SECRETS/telegram_bot_token.txt
 ```
 
 ### 5. Настроить правила
