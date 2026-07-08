@@ -1,6 +1,6 @@
 services:
-  bridge:
-    build: .
+  smarthome-bridge:
+    build: ./src # Assuming we clone repo into the src/ subdir
     container_name: smarthome-bridge
     restart: unless-stopped
     environment:
