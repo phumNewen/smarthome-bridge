@@ -1,6 +1,6 @@
 services:
   smarthome-bridge:
-    build: ./src # Assuming we clone repo into the src/ subdir
+    build: ./src # The src/ is auto-created symlink
     container_name: smarthome-bridge
     restart: unless-stopped
     environment:

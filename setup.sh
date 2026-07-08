@@ -28,9 +28,8 @@ echo "  -> git safe.directory added"
 
 # Запретим push для prod'а
 git -C "$REPO_ROOT" config remote.origin.pushurl "This is prod copy of repo. You are not allowed to push"
-echo "  -> push blocked on server"
 
-# --- Шаг 1: Симлинк и рабочие файлы ---
+# --- Шаг 1: Разворачиваем окружение ---
 echo "[1/2] Deploying runtime files..."
 
 ln -sfn "$REPO_NAME" "$TARGET/src"
@@ -51,7 +50,7 @@ else
     echo "  -> config.yaml already exists, skipping"
 fi
 
-# --- Шаг 2: Финализация ---
+# --- Шаг 2: Готово ---
 echo "[2/2] Done."
 echo ""
 echo "Directory layout:"
