@@ -41,7 +41,9 @@ fi
 git config --global --add safe.directory "$TARGET/$REPO_NAME" 2>/dev/null || true
 echo "  -> git safe.directory added"
 
-# Симлинк для docker-compose (всегда ссылается на актуальный каталог репо)
+# Заблокировать push с сервера
+git -C "$TARGET/$REPO_NAME" config remote.origin.pushurl "PUSH_BLOCKED__use_your_local_machine"
+echo "  -> push blocked on server"
 ln -sfn "$REPO_NAME" "$TARGET/src"
 echo "  -> symlink src/ -> $REPO_NAME/"
 
