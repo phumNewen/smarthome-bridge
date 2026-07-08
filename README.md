@@ -158,6 +158,8 @@ bash setup.sh
 ```ini
 MQTT_BROKER=tcp://192.168.1.10:1883
 MQTT_USERNAME=homebridge
+# Для системных уведомлений (старт, ошибки):
+ADMIN_CHAT_ID=123456789
 ```
 
 ### 4. Заполнить секреты
