@@ -92,6 +92,9 @@ func (a *App) Run(ctx context.Context) error {
 		a.notifyPump(ctx, notifyCh, tgClient)
 	}()
 
+	// Send startup notification.
+	go a.sendStartup(ctx, tgClient)
+
 	// Wait for shutdown signal.
 	<-ctx.Done()
 	slog.Info("shutdown signal received, draining...")
@@ -143,6 +146,36 @@ func (a *App) notifyPump(ctx context.Context, ch <-chan *engine.TriggerResult, t
 	}
 
 	slog.Info("notify pump stopped")
+}
+
+// sendStartup sends a startup notification to all unique chat IDs from enabled rules.
+func (a *App) sendStartup(ctx context.Context, tg *notifier.TelegramClient) {
+	chats := collectChatIDs(a.cfg.Rules)
+	if len(chats) == 0 {
+		return
+	}
+	msg := fmt.Sprintf("✅ smarthome-bridge started\n%s", time.Now().Format("2006-01-02 15:04:05"))
+	if err := tg.SendMessage(ctx, chats, msg); err != nil {
+		slog.Warn("startup notification failed", "error", err)
+	}
+}
+
+// collectChatIDs returns unique chat IDs from enabled rules.
+func collectChatIDs(rules []config.Rule) []int64 {
+	seen := make(map[int64]bool)
+	var chats []int64
+	for _, r := range rules {
+		if !r.IsEnabled() {
+			continue
+		}
+		for _, id := range r.ChatIDs {
+			if !seen[id] {
+				seen[id] = true
+				chats = append(chats, id)
+			}
+		}
+	}
+	return chats
 }
 
 // toMQTTSubscriptions converts config subscriptions to mqtt package subscriptions.
