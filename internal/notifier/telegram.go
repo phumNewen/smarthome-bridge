@@ -61,17 +61,20 @@ type telegramResponse struct {
 }
 
 // Send delivers a notification to all specified chat IDs.
+// Returns the last error encountered (if any), but continues sending to remaining chats.
 func (t *TelegramClient) Send(ctx context.Context, n Notification) error {
+	var lastErr error
 	for _, chatID := range n.ChatIDs {
 		if err := t.sendToOne(ctx, chatID, n.Text, n.ParseMode); err != nil {
 			slog.Error("telegram send failed",
 				"chat_id", chatID,
 				"error", err,
 			)
+			lastErr = err
 			// Continue to next chat_id even if one fails.
 		}
 	}
-	return nil
+	return lastErr
 }
 
 // sendToOne sends a message to a single chat with retry logic.
