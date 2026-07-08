@@ -368,7 +368,7 @@ func parseTimeOfDay(s string) (int, error) {
 // Falls back to reading the file pointed to by fileEnvVar (Docker secrets pattern).
 // Returns defaultValue if neither is available.
 func envOrFile(envVar, fileEnvVar, defaultValue string) string {
-	if v, ok := os.LookupEnv(envVar); ok {
+	if v := os.Getenv(envVar); v != "" {
 		return v
 	}
 	if path := os.Getenv(fileEnvVar); path != "" {
