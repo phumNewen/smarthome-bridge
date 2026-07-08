@@ -37,6 +37,10 @@ else
     echo "  -> repo already in place, skipping copy"
 fi
 
+# Разрешить git pull независимо от владельца файлов
+git config --global --add safe.directory "$TARGET/$REPO_NAME" 2>/dev/null || true
+echo "  -> git safe.directory added"
+
 # Симлинк для docker-compose (всегда ссылается на актуальный каталог репо)
 ln -sfn "$REPO_NAME" "$TARGET/src"
 echo "  -> symlink src/ -> $REPO_NAME/"
