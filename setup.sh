@@ -86,6 +86,9 @@ if [ ! -f "$TARGET/.env" ]; then
 MQTT_BROKER=tcp://localhost:1883
 # MQTT username (leave empty to skip)
 MQTT_USERNAME=
+# Admin chat ID for system notifications (startup, errors)
+# Can be a single ID or comma-separated list: 123456,789012
+ADMIN_CHAT_ID=
 ENVEOF
     echo "  -> .env created (fill in the values)"
 else

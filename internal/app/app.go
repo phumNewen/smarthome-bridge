@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -148,9 +151,13 @@ func (a *App) notifyPump(ctx context.Context, ch <-chan *engine.TriggerResult, t
 	slog.Info("notify pump stopped")
 }
 
-// sendStartup sends a startup notification to all unique chat IDs from enabled rules.
+// sendStartup sends a startup notification.
+// Uses ADMIN_CHAT_ID env var if set, otherwise collects chat IDs from enabled rules.
 func (a *App) sendStartup(ctx context.Context, tg *notifier.TelegramClient) {
-	chats := collectChatIDs(a.cfg.Rules)
+	chats := adminChatID()
+	if len(chats) == 0 {
+		chats = collectChatIDs(a.cfg.Rules)
+	}
 	if len(chats) == 0 {
 		return
 	}
@@ -158,6 +165,33 @@ func (a *App) sendStartup(ctx context.Context, tg *notifier.TelegramClient) {
 	if err := tg.SendMessage(ctx, chats, msg); err != nil {
 		slog.Warn("startup notification failed", "error", err)
 	}
+}
+
+// adminChatID reads ADMIN_CHAT_ID from env (comma-separated list).
+func adminChatID() []int64 {
+	raw := os.Getenv("ADMIN_CHAT_ID")
+	if raw == "" {
+		return nil
+	}
+	var chats []int64
+	for _, s := range splitAndTrim(raw, ",") {
+		if id, err := strconv.ParseInt(s, 10, 64); err == nil {
+			chats = append(chats, id)
+		}
+	}
+	return chats
+}
+
+// splitAndTrim splits a string by separator and trims each part.
+func splitAndTrim(s, sep string) []string {
+	var parts []string
+	for _, p := range strings.Split(s, sep) {
+		t := strings.TrimSpace(p)
+		if t != "" {
+			parts = append(parts, t)
+		}
+	}
+	return parts
 }
 
 // collectChatIDs returns unique chat IDs from enabled rules.

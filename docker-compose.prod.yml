@@ -18,6 +18,7 @@ services:
       - TZ=Europe/Moscow
       - MQTT_BROKER=${MQTT_BROKER:-}
       - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID:-}
       - MQTT_PASSWORD_FILE=/run/secrets/mqtt_password
       - TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
     secrets:
