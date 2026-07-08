@@ -1,11 +1,11 @@
 # Production docker-compose override
-# Used by scripts/setup.sh to create the working docker-compose.yml
+# Used by setup.sh to create the working compose.yml
 # Build context points to src/ subdirectory (cloned repo).
 
 services:
   bridge:
     build:
-      context: ./src
+      context: ./src # The src/ is auto-created symlink
       dockerfile: Dockerfile
     container_name: smarthome-bridge
     restart: unless-stopped

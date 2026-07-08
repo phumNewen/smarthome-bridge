@@ -3,9 +3,9 @@
 # setup.sh — разворачивает smarthome-bridge в родительский каталог
 # ---------------------------------------------------------------------------
 # Использование:
-#   cd /opt/smarthome-bridge
-#   git clone <repo-url>     # имя каталога любое
-#   cd smarthome-bridge && bash setup.sh
+#   cd ./<your_smarthome-bridge_dir>
+#   git clone <repo-url>  <src>   # имя каталога любое
+#   cd <src> && bash setup.sh
 #
 # Или указать другой каталог:
 #   TARGET=/srv/bridge bash setup.sh
@@ -44,11 +44,11 @@ echo "  -> symlink src/ -> $REPO_NAME/"
 # --- Шаг 2: Развернуть рабочие файлы ---
 echo "[2/3] Deploying runtime files..."
 
-if [ ! -f "$TARGET/docker-compose.yml" ]; then
-    cp "$TARGET/src/docker-compose.prod.yml" "$TARGET/docker-compose.yml"
-    echo "  -> docker-compose.yml created"
+if [ ! -f "$TARGET/compose.yml" ]; then
+    cp "$TARGET/src/docker-compose.prod.yml" "$TARGET/compose.yml"
+    echo "  -> compose.yml created"
 else
-    echo "  -> docker-compose.yml already exists, skipping"
+    echo "  -> compose.yml already exists, skipping"
 fi
 
 if [ ! -f "$TARGET/config.yaml" ]; then
@@ -66,7 +66,7 @@ echo "Directory layout:"
 echo "  $TARGET/"
 echo "  ├── src/ -> $REPO_NAME/     ← symlink to repository"
 echo "  ├── $REPO_NAME/             ← repository (untouched)"
-echo "  ├── docker-compose.yml"
+echo "  ├── compose.yml"
 echo "  └── config.yaml"
 echo ""
 echo "Next steps:"
