@@ -1,0 +1,9 @@
+bridge.exe
+.git/
+.vscode/
+.idea/
+*.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+.gitignore

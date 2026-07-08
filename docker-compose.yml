@@ -1,0 +1,16 @@
+services:
+  bridge:
+    build: .
+    container_name: smarthome-bridge
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      # Для dead letter queue (будет добавлен позже):
+      # - ./data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
