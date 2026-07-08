@@ -2,65 +2,63 @@
 # ---------------------------------------------------------------------------
 # setup.sh — разворачивает smarthome-bridge на сервере
 # ---------------------------------------------------------------------------
-# Запуск:
-#   curl -fsSL https://raw.githubusercontent.com/<user>/smarthome-bridge/master/scripts/setup.sh | bash
-#   или
-#   mkdir -p /opt/smarthome-bridge && cd /opt/smarthome-bridge && bash <этот-скрипт>
+# Запуск из корня репозитория:
+#   bash scripts/setup.sh
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/<user>/smarthome-bridge.git}"
+# Корень репозитория — на один уровень выше scripts/
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE_DIR="${BASE_DIR:-/opt/smarthome-bridge}"
-SRC_DIR="$BASE_DIR/src"
 
 echo "=== smarthome-bridge setup ==="
-echo "Base dir : $BASE_DIR"
-echo "Repo URL : $REPO_URL"
+echo "Repo root : $REPO_ROOT"
+echo "Base dir  : $BASE_DIR"
 echo ""
 
-# --- Шаг 1: Создать структуру каталогов ---
-echo "[1/4] Creating directory structure..."
-mkdir -p "$BASE_DIR" "$SRC_DIR"
+# --- Шаг 1: Создать каталог и скопировать исходники ---
+echo "[1/3] Copying repository into $BASE_DIR/src/..."
+mkdir -p "$BASE_DIR"
 
-# --- Шаг 2: Клонировать репозиторий ---
-echo "[2/4] Cloning repository into src/..."
-if [ -d "$SRC_DIR/.git" ]; then
-    echo "  -> Repository exists, pulling latest..."
-    git -C "$SRC_DIR" pull --ff-only
+if [ -d "$BASE_DIR/src" ]; then
+    echo "  -> src/ already exists, skipping"
 else
-    git clone "$REPO_URL" "$SRC_DIR"
+    cp -r "$REPO_ROOT" "$BASE_DIR/src"
+    echo "  -> src/ copied"
 fi
 
-# --- Шаг 3: Развернуть рабочие файлы ---
-echo "[3/4] Deploying runtime files..."
+# --- Шаг 2: Развернуть рабочие файлы ---
+echo "[2/3] Deploying runtime files..."
 
-# docker-compose.yml — копируем шаблон и подставляем пути
 if [ ! -f "$BASE_DIR/docker-compose.yml" ]; then
-    cp "$SRC_DIR/docker-compose.prod.yml" "$BASE_DIR/docker-compose.yml"
+    cp "$BASE_DIR/src/docker-compose.prod.yml" "$BASE_DIR/docker-compose.yml"
     echo "  -> docker-compose.yml created"
 else
     echo "  -> docker-compose.yml already exists, skipping"
 fi
 
-# config.yaml — копируем пример, если нет реального конфига
 if [ ! -f "$BASE_DIR/config.yaml" ]; then
-    cp "$SRC_DIR/config.example.yaml" "$BASE_DIR/config.yaml"
+    cp "$BASE_DIR/src/config.example.yaml" "$BASE_DIR/config.yaml"
     echo "  -> config.yaml created (from example)"
     echo "  ==> EDIT $BASE_DIR/config.yaml BEFORE STARTING <=="
 else
     echo "  -> config.yaml already exists, skipping"
 fi
 
-# --- Шаг 4: Права и финализация ---
-echo "[4/4] Done."
+# --- Шаг 3: Финализация ---
+echo "[3/3] Done."
 echo ""
 echo "Directory layout:"
 echo "  $BASE_DIR/"
-echo "  ├── src/                  ← untouched git repo"
+echo "  ├── src/                  ← untouched repository copy"
 echo "  ├── docker-compose.yml"
 echo "  └── config.yaml"
 echo ""
 echo "Next steps:"
 echo "  1. Edit config.yaml:  nano $BASE_DIR/config.yaml"
-echo "  2. Start the service: docker compose -f $BASE_DIR/docker-compose.yml up -d"
-echo "  3. Check logs:        docker compose -f $BASE_DIR/docker-compose.yml logs -f"
+echo "  2. Start the service: cd $BASE_DIR && docker compose up -d"
+echo "  3. Check logs:        cd $BASE_DIR && docker compose logs -f"
+echo ""
+echo "To update later:"
+echo "  git -C $BASE_DIR/src pull"
+echo "  cd $BASE_DIR && docker compose up -d --build"
