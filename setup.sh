@@ -3,9 +3,9 @@
 # setup.sh — разворачивает smarthome-bridge в родительский каталог
 # ---------------------------------------------------------------------------
 # Использование:
-#   cd /opt/smarthome-bridge
-#   git clone <repo-url>
-#   cd smarthome-bridge && bash setup.sh
+#   cd ./<your_smarthome-bridge_dir>
+#   git clone <repo-url>  <src>   # имя каталога любое
+#   cd <src> && bash setup.sh
 #
 # Или указать другой каталог:
 #   TARGET=/srv/bridge bash setup.sh
