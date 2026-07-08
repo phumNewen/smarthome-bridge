@@ -16,6 +16,8 @@ REPO_ROOT="$(pwd)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 TARGET="${TARGET:-$(dirname "$REPO_ROOT")}"
 SECRETS_DIR="$(realpath "$TARGET/../../data/docker-secrets")"
+REPO_VERSION=$(cat "$REPO_ROOT/VERSION")
+DEPLOYED_VERSION=$(cat "$TARGET/.version" 2>/dev/null || echo "0")
 
 echo "=== smarthome-bridge setup ==="
 echo "Repo root : $REPO_ROOT"
@@ -26,6 +28,14 @@ echo ""
 # Настраиваем обновление через git pull
 git config --global --add safe.directory "$REPO_ROOT" 2>/dev/null || true
 echo "  -> git safe.directory added"
+
+# Проверим версию деплоя
+if [ "$REPO_VERSION" != "$DEPLOYED_VERSION" ]; then
+    echo "  -> version changed ($DEPLOYED_VERSION -> $REPO_VERSION), will overwrite deployed files"
+    OVERWRITE=true
+else
+    OVERWRITE=false
+fi
 
 # Запретим push для prod'а
 git -C "$REPO_ROOT" config remote.origin.pushurl "This is prod copy of repo. You are not allowed to push"
@@ -91,7 +101,7 @@ echo "[2/3] Deploying runtime files..."
 ln -sfn "$REPO_NAME" "$TARGET/src"
 echo "  -> symlink src/ -> $REPO_NAME/"
 
-if [ ! -f "$TARGET/compose.yml" ]; then
+if [ ! -f "$TARGET/compose.yml" ] || [ "$OVERWRITE" = true ]; then
     cp "$REPO_ROOT/docker-compose.prod.yml" "$TARGET/compose.yml"
     sed -i "s|__SECRETS_DIR__|$SECRETS_DIR|" "$TARGET/compose.yml"
     echo "  -> compose.yml created"
@@ -99,12 +109,14 @@ else
     echo "  -> compose.yml already exists, skipping"
 fi
 
-if [ ! -f "$TARGET/config.yaml" ]; then
+if [ ! -f "$TARGET/config.yaml" ] || [ "$OVERWRITE" = true ]; then
     cp "$REPO_ROOT/config.example.yaml" "$TARGET/config.yaml"
     echo "  -> config.yaml created (from example)"
 else
     echo "  -> config.yaml already exists, skipping"
 fi
+
+echo "$REPO_VERSION" > "$TARGET/.version"
 
 # --- Шаг 3: Готово ---
 echo "[3/3] Done."
