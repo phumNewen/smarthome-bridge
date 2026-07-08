@@ -4,12 +4,15 @@
 # Copy this file to config.yaml and adjust values to match your environment.
 
 # --- MQTT Broker Connection ---
+# broker, username, password — задаются через .env и secrets (Docker)
+# или напрямую в этом файле (локальный запуск).
 mqtt:
-  broker: "tcp://localhost:1883"          # MQTT broker address
+  broker: ""                              # Docker: MQTT_BROKER в .env
+                                          # Local:  "tcp://localhost:1883"
                                           # Supported schemes: tcp://, ssl://, ws://, wss://
   client_id: ""                           # Client ID (auto-generated from hostname+PID if empty)
-  username: ""                            # MQTT username (optional)
-  password: ""                            # MQTT password (optional)
+  username: ""                            # Docker: MQTT_USERNAME в .env
+  password: ""                            # Docker: MQTT_PASSWORD_FILE=/run/secrets/mqtt_password
   keep_alive_sec: 60                      # Keepalive interval in seconds
   connect_timeout_sec: 30                 # Initial connection timeout
   ping_timeout_sec: 10                    # Per-ping timeout
@@ -21,8 +24,10 @@ mqtt:
       qos: 1
 
 # --- Telegram Bot ---
+# bot_token — задаётся через secrets (Docker) или напрямую в этом файле (локально).
 telegram:
-  bot_token: "YOUR_BOT_TOKEN_HERE"        # Get from @BotFather on Telegram
+  bot_token: ""                           # Docker: TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
+                                          # Local:  "12345:ABC-DEF..." (from @BotFather)
   api_base_url: ""                        # Default: https://api.telegram.org
   retry_max: 3                            # Max retry attempts on failure
   retry_backoff_ms: [200, 600, 1800]      # Delay before each retry (ms)
