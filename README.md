@@ -137,6 +137,65 @@ make run         # Сборка и запуск
 make clean       # Очистка артефактов
 ```
 
+## Деплой на сервер (Docker Compose)
+
+### Первый запуск
+
+```bash
+# 1. Клонировать репозиторий
+cd /opt/smarthome-bridge
+git clone https://github.com/<user>/smarthome-bridge.git src
+cd src
+
+# 2. Запустить setup
+bash setup.sh
+```
+
+### 3. Заполнить .env
+
+Отредактировать `/opt/smarthome-bridge/.env`:
+
+```ini
+MQTT_BROKER=tcp://192.168.1.10:1883
+MQTT_USERNAME=homebridge
+```
+
+### 4. Создать секреты
+
+```bash
+SECRETS=/opt/data/docker-secrets
+
+# MQTT пароль
+echo "ваш_пароль_mqtt" > $SECRETS/mqtt_password.txt
+chmod 600 $SECRETS/mqtt_password.txt
+
+# Telegram bot token
+echo "12345:ABC-DEF..." > $SECRETS/telegram_bot_token.txt
+chmod 600 $SECRETS/telegram_bot_token.txt
+```
+
+### 5. Настроить правила
+
+Отредактировать `/opt/smarthome-bridge/config.yaml` — прописать `chat_ids`, правила под свои датчики.
+
+### 6. Запустить
+
+```bash
+cd /opt/smarthome-bridge
+docker compose up -d
+docker compose logs -f
+```
+
+### Обновление
+
+```bash
+cd /opt/smarthome-bridge
+git -C src pull
+docker compose up -d --build
+```
+
+Если `VERSION` в репозитории изменился — `compose.yml` и `config.yaml` перезапишутся (сохрани резервную копию).
+
 ## Лицензия
 
 MIT

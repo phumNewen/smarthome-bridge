@@ -44,63 +44,11 @@ else
     OVERWRITE=false
 fi
 
-# --- Шаг 1: Креды ---
-echo "[1/3] Configuring credentials..."
-
-# MQTT Broker
-if [ -n "${MQTT_BROKER:-}" ]; then
-    echo "  -> MQTT_BROKER from env"
-else
-    read -r -p "MQTT broker address [tcp://localhost:1883]: " MQTT_BROKER
-    MQTT_BROKER="${MQTT_BROKER:-tcp://localhost:1883}"
-fi
-
-# MQTT Username
-if [ -n "${MQTT_USERNAME:-}" ]; then
-    echo "  -> MQTT_USERNAME from env"
-else
-    read -r -p "MQTT username (empty to skip): " MQTT_USERNAME
-fi
-
-# MQTT Password
-if [ -n "${MQTT_PASSWORD:-}" ]; then
-    echo "  -> MQTT_PASSWORD from env"
-else
-    read -r -s -p "MQTT password: " MQTT_PASSWORD
-    echo
-    read -r -s -p "MQTT password (confirm): " MQTT_PASSWORD_CONFIRM
-    echo
-    if [ "$MQTT_PASSWORD" != "$MQTT_PASSWORD_CONFIRM" ]; then
-        echo "  -> Passwords do not match!"
-        exit 1
-    fi
-fi
-
-# Telegram Bot Token
-if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
-    echo "  -> TELEGRAM_BOT_TOKEN from env"
-else
-    read -r -s -p "Telegram bot token: " TELEGRAM_BOT_TOKEN
-    echo
-fi
-
-# Сохраняем секреты
+# Создаём каталог для секретов
 mkdir -p -m 700 "$SECRETS_DIR"
 
-if [ -n "${MQTT_PASSWORD:-}" ]; then
-    echo "$MQTT_PASSWORD" > "$SECRETS_DIR/mqtt_password.txt"
-    chmod 600 "$SECRETS_DIR/mqtt_password.txt"
-    echo "  -> mqtt_password saved to secrets/"
-fi
-
-if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
-    echo "$TELEGRAM_BOT_TOKEN" > "$SECRETS_DIR/telegram_bot_token.txt"
-    chmod 600 "$SECRETS_DIR/telegram_bot_token.txt"
-    echo "  -> telegram_bot_token saved to secrets/"
-fi
-
-# --- Шаг 2: Разворачиваем окружение ---
-echo "[2/3] Deploying runtime files..."
+# --- Шаг 1: Разворачиваем окружение ---
+echo "[1/2] Deploying runtime files..."
 
 ln -sfn "$REPO_NAME" "$TARGET/src"
 echo "  -> symlink src/ -> $REPO_NAME/"
@@ -134,8 +82,8 @@ fi
 
 echo "$REPO_VERSION" > "$TARGET/.version"
 
-# --- Шаг 3: Готово ---
-echo "[3/3] Done."
+# --- Шаг 2: Готово ---
+echo "[2/2] Done."
 echo ""
 echo "Directory layout:"
 echo "  $TARGET/"
