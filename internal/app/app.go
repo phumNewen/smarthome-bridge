@@ -155,15 +155,23 @@ func (a *App) notifyPump(ctx context.Context, ch <-chan *engine.TriggerResult, t
 // Uses ADMIN_CHAT_ID env var if set, otherwise collects chat IDs from enabled rules.
 func (a *App) sendStartup(ctx context.Context, tg *notifier.TelegramClient) {
 	chats := adminChatID()
+	fromEnv := len(chats) > 0
 	if len(chats) == 0 {
 		chats = collectChatIDs(a.cfg.Rules)
 	}
 	if len(chats) == 0 {
+		slog.Warn("startup notification skipped: no chat IDs configured")
 		return
 	}
+	slog.Info("sending startup notification",
+		"chats", chats,
+		"from_admin_env", fromEnv,
+	)
 	msg := fmt.Sprintf("✅ smarthome-bridge started\n%s", time.Now().Format("2006-01-02 15:04:05"))
 	if err := tg.SendMessage(ctx, chats, msg); err != nil {
 		slog.Warn("startup notification failed", "error", err)
+	} else {
+		slog.Info("startup notification sent")
 	}
 }
 
