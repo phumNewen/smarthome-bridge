@@ -1,6 +1,11 @@
-# Production docker-compose override
-# Used by setup.sh to create the working compose.yml
-# Build context points to src/ subdirectory (cloned repo).
+# Production compose — deployed by setup.sh to compose.yml
+# Build context points to src/ symlink (cloned repo).
+
+secrets:
+  mqtt_password:
+    file: __SECRETS_DIR__/mqtt_password.txt
+  telegram_bot_token:
+    file: __SECRETS_DIR__/telegram_bot_token.txt
 
 services:
   bridge:
@@ -11,6 +16,13 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Europe/Moscow
+      - MQTT_BROKER=${MQTT_BROKER:-}
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD_FILE=/run/secrets/mqtt_password
+      - TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
+    secrets:
+      - mqtt_password
+      - telegram_bot_token
     volumes:
       - ./config.yaml:/config/config.yaml:ro
     logging:

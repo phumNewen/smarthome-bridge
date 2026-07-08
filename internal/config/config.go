@@ -155,6 +155,8 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.overrideFromEnv()
+
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
@@ -212,6 +214,23 @@ func (c *Config) applyDefaults() error {
 		}
 	}
 	return nil
+}
+
+// overrideFromEnv overrides config values from environment variables.
+// *_FILE variables point to Docker secrets / mounted files.
+func (c *Config) overrideFromEnv() {
+	if v := envOrFile("MQTT_BROKER", "MQTT_BROKER_FILE", ""); v != "" {
+		c.MQTT.Broker = v
+	}
+	if v := envOrFile("MQTT_USERNAME", "MQTT_USERNAME_FILE", ""); v != "" {
+		c.MQTT.Username = v
+	}
+	if v := envOrFile("MQTT_PASSWORD", "MQTT_PASSWORD_FILE", ""); v != "" {
+		c.MQTT.Password = v
+	}
+	if v := envOrFile("TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN_FILE", ""); v != "" {
+		c.Telegram.BotToken = v
+	}
 }
 
 // validate checks all configuration constraints.
@@ -343,6 +362,22 @@ func parseTimeOfDay(s string) (int, error) {
 		return 0, fmt.Errorf("invalid time %q: hours 0-23, minutes 0-59", s)
 	}
 	return h*60 + m, nil
+}
+
+// envOrFile returns the value of envVar if set.
+// Falls back to reading the file pointed to by fileEnvVar (Docker secrets pattern).
+// Returns defaultValue if neither is available.
+func envOrFile(envVar, fileEnvVar, defaultValue string) string {
+	if v, ok := os.LookupEnv(envVar); ok {
+		return v
+	}
+	if path := os.Getenv(fileEnvVar); path != "" {
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return strings.TrimSpace(string(data))
+		}
+	}
+	return defaultValue
 }
 
 // compile pre-compiles regex patterns and performs final setup.
