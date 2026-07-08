@@ -1,0 +1,20 @@
+# Production docker-compose override
+# Used by scripts/setup.sh to create the working docker-compose.yml
+# Build context points to src/ subdirectory (cloned repo).
+
+services:
+  bridge:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: smarthome-bridge
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
