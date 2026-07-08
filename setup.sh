@@ -25,6 +25,12 @@ echo "Repo name : $REPO_NAME"
 echo "Target    : $TARGET"
 echo ""
 
+# Подхватываем заполненный .env (если есть)
+if [ -f "$TARGET/.env" ]; then
+    set -a && source "$TARGET/.env" && set +a
+    echo "  -> .env loaded"
+fi
+
 # Настраиваем обновление через git pull
 git config --global --add safe.directory "$REPO_ROOT" 2>/dev/null || true
 echo "  -> git safe.directory added"
@@ -114,6 +120,22 @@ if [ ! -f "$TARGET/config.yaml" ] || [ "$OVERWRITE" = true ]; then
     echo "  -> config.yaml created (from example)"
 else
     echo "  -> config.yaml already exists, skipping"
+fi
+
+if [ ! -f "$TARGET/.env" ]; then
+    cat > "$TARGET/.env" << 'ENVEOF'
+# MQTT broker address
+MQTT_BROKER=tcp://localhost:1883
+# MQTT username (leave empty to skip)
+MQTT_USERNAME=
+# MQTT password
+MQTT_PASSWORD=
+# Telegram bot token (from @BotFather)
+TELEGRAM_BOT_TOKEN=
+ENVEOF
+    echo "  -> .env created (fill in the values)"
+else
+    echo "  -> .env already exists, skipping"
 fi
 
 echo "$REPO_VERSION" > "$TARGET/.version"
