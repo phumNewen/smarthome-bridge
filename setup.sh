@@ -44,8 +44,20 @@ else
     OVERWRITE=false
 fi
 
-# Создаём каталог для секретов
+# Создаём каталог и шаблоны секретов
 mkdir -p -m 700 "$SECRETS_DIR"
+
+if [ ! -f "$SECRETS_DIR/mqtt_password.txt" ]; then
+    echo "REPLACE_ME" > "$SECRETS_DIR/mqtt_password.txt"
+    chmod 600 "$SECRETS_DIR/mqtt_password.txt"
+    echo "  -> secrets/mqtt_password.txt created (fill in the value)"
+fi
+
+if [ ! -f "$SECRETS_DIR/telegram_bot_token.txt" ]; then
+    echo "REPLACE_ME" > "$SECRETS_DIR/telegram_bot_token.txt"
+    chmod 600 "$SECRETS_DIR/telegram_bot_token.txt"
+    echo "  -> secrets/telegram_bot_token.txt created (fill in the value)"
+fi
 
 # --- Шаг 1: Разворачиваем окружение ---
 echo "[1/2] Deploying runtime files..."
