@@ -33,7 +33,8 @@ fi
 
 # Настраиваем обновление через git pull
 git config --global --add safe.directory "$REPO_ROOT" 2>/dev/null || true
-echo "  -> git safe.directory added"
+# Запретим push для prod'а
+git -C "$REPO_ROOT" config remote.origin.pushurl "This is prod copy of repo. You are not allowed to push"
 
 # Проверим версию деплоя
 if [ "$REPO_VERSION" != "$DEPLOYED_VERSION" ]; then
@@ -42,9 +43,6 @@ if [ "$REPO_VERSION" != "$DEPLOYED_VERSION" ]; then
 else
     OVERWRITE=false
 fi
-
-# Запретим push для prod'а
-git -C "$REPO_ROOT" config remote.origin.pushurl "This is prod copy of repo. You are not allowed to push"
 
 # --- Шаг 1: Креды ---
 echo "[1/3] Configuring credentials..."
@@ -128,10 +126,6 @@ if [ ! -f "$TARGET/.env" ]; then
 MQTT_BROKER=tcp://localhost:1883
 # MQTT username (leave empty to skip)
 MQTT_USERNAME=
-# MQTT password
-MQTT_PASSWORD=
-# Telegram bot token (from @BotFather)
-TELEGRAM_BOT_TOKEN=
 ENVEOF
     echo "  -> .env created (fill in the values)"
 else
